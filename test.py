@@ -59,12 +59,12 @@ while True:
 
         # Draw hand connections (skeleton) to track all fingers visually
         connections = [
-            (0, 1), (1, 2), (2, 3), (3, 4),      # Thumb
-            (5, 6), (6, 7), (7, 8),              # Index
-            (9, 10), (10, 11), (11, 12),        # Middle
-            (13, 14), (14, 15), (15, 16),        # Ring
-            (17, 18), (18, 19), (19, 20),        # Pinky
-            (0, 5), (5, 9), (9, 13), (13, 17), (0, 17) # Palm
+            (0, 1), (1, 2), (2, 3), (3, 4),                         # Thumb
+            (5, 6), (6, 7), (7, 8),                                 # Index
+            (9, 10), (10, 11), (11, 12),                            # Middle
+            (13, 14), (14, 15), (15, 16),                           # Ring
+            (17, 18), (18, 19), (19, 20),                           # Pinky
+            (0, 5), (5, 9), (9, 13), (13, 17), (0, 17)              # Palm
         ]
         for start_idx, end_idx in connections:
             start_lm = hand[start_idx]
@@ -93,12 +93,8 @@ while True:
 
         # --- Relaxed and Robust Gesture Classification ---
         if open_fingers_count == 0:
-            if thumb_open:
-                # 4 fingers down + thumb open (thumbs up) -> Scroll Down
-                gesture_text = "SCROLL DOWN"
-            else:
-                # All fingers closed (fist) -> Reopen (Restore all)
-                gesture_text = "REOPEN"
+            # All fingers closed (fist) -> Reopen (Restore all)
+            gesture_text = "REOPEN"
         elif open_fingers_count == 1:
             # 1 finger up -> Scroll Up
             gesture_text = "SCROLL UP"
@@ -108,9 +104,6 @@ while True:
         elif open_fingers_count == 4 and thumb_open:
             # 5 fingers open (4 main open + thumb open) -> Close (Minimize all)
             gesture_text = "CLOSE"
-        elif open_fingers_count == 4 and not thumb_open:
-            # 4 fingers open (thumb closed) -> Scroll Down
-            gesture_text = "SCROLL DOWN"
         else:
             gesture_text = "NEUTRAL"
 

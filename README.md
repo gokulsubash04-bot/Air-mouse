@@ -51,7 +51,7 @@ python test.py
 | ✊ **All fingers closed** (fist) | `REOPEN` | **Restore Minimized Windows** | Close all fingers (fist) to restore all minimized windows (`Win + D`). |
 | ☝️ **1 finger open** (index) | `SCROLL UP` | **Scroll Page Up** | Raise 1 finger to trigger continuous scroll up. |
 | ✋ **5 fingers open** (open hand) | `CLOSE` | **Minimize All Windows** | Open all 5 fingers to minimize all active windows (`Win + D`). |
-| ✌️ **2 fingers open** / **4 fingers open** / **Thumbs Up** | `SCROLL DOWN` | **Scroll Page Down** | Raise 2 fingers, 4 fingers (thumb closed), or do a thumbs up (4 fingers down) to scroll down. |
+| ✌️ **2 fingers open** | `SCROLL DOWN` | **Scroll Page Down** | Raise 2 fingers to trigger continuous scroll down. |
 
 - **ESC Key**: Press `ESC` to close the camera window and exit the application safely.
 
