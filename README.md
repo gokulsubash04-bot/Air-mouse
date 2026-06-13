@@ -6,16 +6,11 @@ A Python-based computer vision application that tracks hand landmarks in real-ti
 
 ## 🚀 Features
 
-- **Real-Time Webcam Feed**: Captures and processes video input with minimal latency.
+- **Real-Time Webcam Feed**: Captures and processes video input with a full-hand skeleton tracking overlay.
 - **Natural Mirror Mode**: Flips the video horizontally so hand movements match cursor movements.
-- **Exponential Moving Average (EMA) Smoothing**: Smooths cursor coordinates to eliminate muscle jitter and camera fluctuations.
-- **Robust Gesture Recognition**: A relaxed gesture classification system that ignores inactive fingers, preventing false negatives.
 - **Rich Controls**:
-  - Precision cursor hover navigation.
-  - Interactive click triggering via pinch gesture.
-  - Vertically scrolling pages/documents.
-  - Minimizing/maximizing active windows.
-  - Browser page back action.
+  - Vertically scrolling pages/documents (Scroll Up and Scroll Down).
+  - Minimizing/restoring all active windows.
 
 ---
 
@@ -53,11 +48,10 @@ python test.py
 
 | Hand Gesture | On-Screen Label | Action Performed | How it Works |
 | :--- | :--- | :--- | :--- |
-| ☝️ **Index finger up** (middle closed) | `MOVE CURSOR` | **Move Cursor** | The cursor follows your index tip. Mapped directly to your screen space. |
-| 🤏 **Index + Thumb pinch** | `CLICK` | **Left Click** | Touch your index tip and thumb tip together to click. You can hold and move to drag. |
-| ✌️ **Index + Middle fingers up** | `SCROLL` | **Scroll Webpage** | Raise both fingers. Move hand **up** to scroll up, or **down** to scroll down. |
-| 🤙 **Pinky finger up** (index closed) | `SHOW/HIDE DESKTOP` | **Toggle Active Webpage** | Raise only your pinky finger to minimize/restore active browser window (`Win + D`). |
-| 👍 **Thumb extended** (index closed) | `GO BACK` | **Go Back in Browser** | Give a thumbs-up to return to the previous page in web browsers (`Alt + Left Arrow`). |
+| ✊ **All fingers closed** (fist) | `REOPEN` | **Restore Minimized Windows** | Close all fingers (fist) to restore all minimized windows (`Win + D`). |
+| ☝️ **1 finger open** (index) | `SCROLL UP` | **Scroll Page Up** | Raise 1 finger to trigger continuous scroll up. |
+| ✋ **5 fingers open** (open hand) | `CLOSE` | **Minimize All Windows** | Open all 5 fingers to minimize all active windows (`Win + D`). |
+| ✌️ **2 fingers open** / **4 fingers open** / **Thumbs Up** | `SCROLL DOWN` | **Scroll Page Down** | Raise 2 fingers, 4 fingers (thumb closed), or do a thumbs up (4 fingers down) to scroll down. |
 
 - **ESC Key**: Press `ESC` to close the camera window and exit the application safely.
 
@@ -69,6 +63,6 @@ python test.py
 - [x] **Click Detection**: Implement gesture-based clicking via thumb-to-index finger pinching.
 - [x] **Scroll Controls**: Add vertical scrolling navigation by raising multiple fingers.
 - [x] **Smoothing Filter**: Implement an Exponential Moving Average (EMA) to prevent cursor jitter.
-- [x] **Window & Back Actions**: Map window minimization/page-back shortcuts to distinct hand gestures.
+- [x] **Window Actions**: Map window minimization and restore shortcuts to distinct hand gestures.
 - [ ] **Drag & Drop**: Implement click-and-hold gestures for moving files/windows.
 - [ ] **Right Click**: Add gesture support for simulating right mouse clicks.

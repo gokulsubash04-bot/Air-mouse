@@ -24,17 +24,8 @@ options = HandLandmarkerOptions(
 landmarker = HandLandmarker.create_from_options(options)
 
 cap = cv2.VideoCapture(0)
-screen_w, screen_h = pyautogui.size()
-
-# Smoothing configuration (Exponential Moving Average)
-SMOOTHING = 0.15
-prev_x, prev_y = None, None
-
 # Action states to prevent repeated key triggers
-clicked = False
-desktop_toggled = False
-back_triggered = False
-prev_scroll_y = None
+is_minimized = False
 
 # Helper to calculate Euclidean distance between two landmarks
 def get_distance(p1, p2):
@@ -64,109 +55,86 @@ while True:
         hand = result.hand_landmarks[0]
         index_tip = hand[8]
 
-        # Calculate visual coordinates on the frame
-        x = int(index_tip.x * w)
-        y = int(index_tip.y * h)
+
+
+        # Draw hand connections (skeleton) to track all fingers visually
+        connections = [
+            (0, 1), (1, 2), (2, 3), (3, 4),      # Thumb
+            (5, 6), (6, 7), (7, 8),              # Index
+            (9, 10), (10, 11), (11, 12),        # Middle
+            (13, 14), (14, 15), (15, 16),        # Ring
+            (17, 18), (18, 19), (19, 20),        # Pinky
+            (0, 5), (5, 9), (9, 13), (13, 17), (0, 17) # Palm
+        ]
+        for start_idx, end_idx in connections:
+            start_lm = hand[start_idx]
+            end_lm = hand[end_idx]
+            sx, sy = int(start_lm.x * w), int(start_lm.y * h)
+            ex, ey = int(end_lm.x * w), int(end_lm.y * h)
+            cv2.line(frame, (sx, sy), (ex, ey), (0, 255, 255), 2)
+
+        # Draw hand landmark joints (dots)
+        for lm in hand:
+            lm_x, lm_y = int(lm.x * w), int(lm.y * h)
+            cv2.circle(frame, (lm_x, lm_y), 5, (0, 255, 0), -1)
 
         # Check if individual fingers are open/extended (comparing tip to PIP joint)
         index_open = index_tip.y < hand[6].y
         middle_open = hand[12].y < hand[10].y
+        ring_open = hand[16].y < hand[14].y
         pinky_open = hand[20].y < hand[18].y
+
+        # Count how many of the 4 fingers (index, middle, ring, pinky) are open
+        open_fingers_count = sum([index_open, middle_open, ring_open, pinky_open])
         
-        # For thumb: check distance to index finger base MCP joint (landmark 5)
+        # Check if thumb is open (distance to index finger base MCP joint landmark 5)
         thumb_dist = get_distance(hand[4], hand[5])
         thumb_open = thumb_dist > 0.08
 
-        # Check pinch distance between thumb tip and index tip for Click
-        pinch_dist = get_distance(hand[4], index_tip)
-        is_pinch = pinch_dist < 0.045
-
         # --- Relaxed and Robust Gesture Classification ---
-        if is_pinch:
-            # Pinch gesture takes priority for click, regardless of finger extension states
-            gesture_text = "CLICK"
-        elif index_open and middle_open:
-            # Index and Middle fingers both open -> Scroll mode
-            gesture_text = "SCROLL"
-        elif index_open and not middle_open:
-            # Index open, Middle closed -> Cursor control (either Move or Click)
-            gesture_text = "MOVE CURSOR"
-        elif pinky_open and not index_open:
-            # Pinky open, Index closed -> Toggle desktop (Hide/Show webpage)
-            gesture_text = "SHOW/HIDE DESKTOP"
-        elif thumb_open and not index_open:
-            # Thumb open, Index closed -> Go Back
-            gesture_text = "GO BACK"
+        if open_fingers_count == 0:
+            if thumb_open:
+                # 4 fingers down + thumb open (thumbs up) -> Scroll Down
+                gesture_text = "SCROLL DOWN"
+            else:
+                # All fingers closed (fist) -> Reopen (Restore all)
+                gesture_text = "REOPEN"
+        elif open_fingers_count == 1:
+            # 1 finger up -> Scroll Up
+            gesture_text = "SCROLL UP"
+        elif open_fingers_count == 2:
+            # 2 fingers up -> Scroll Down
+            gesture_text = "SCROLL DOWN"
+        elif open_fingers_count == 4 and thumb_open:
+            # 5 fingers open (4 main open + thumb open) -> Close (Minimize all)
+            gesture_text = "CLOSE"
+        elif open_fingers_count == 4 and not thumb_open:
+            # 4 fingers open (thumb closed) -> Scroll Down
+            gesture_text = "SCROLL DOWN"
         else:
             gesture_text = "NEUTRAL"
 
         # --- EXECUTE ACTIONS ---
 
-        # 1. Move Cursor (works in both MOVE CURSOR and CLICK states for precise clicking)
-        if gesture_text in ["MOVE CURSOR", "CLICK"]:
-            cv2.circle(frame, (x, y), 10, (0, 255, 0), -1)
 
-            # Scale coordinates using the entire camera space
-            norm_x = max(0.0, min(1.0, index_tip.x))
-            norm_y = max(0.0, min(1.0, index_tip.y))
-
-            target_x = int(norm_x * screen_w)
-            target_y = int(norm_y * screen_h)
-
-            if prev_x is None or prev_y is None:
-                smooth_x, smooth_y = target_x, target_y
-            else:
-                smooth_x = int(prev_x + (target_x - prev_x) * SMOOTHING)
-                smooth_y = int(prev_y + (target_y - prev_y) * SMOOTHING)
-
-            prev_x, prev_y = smooth_x, smooth_y
-
-            mouse_x = max(0, min(screen_w - 1, smooth_x))
-            mouse_y = max(0, min(screen_h - 1, smooth_y))
-            pyautogui.moveTo(mouse_x, mouse_y)
-
-        # 2. Click action
-        if gesture_text == "CLICK":
-            if not clicked:
-                pyautogui.click()
-                clicked = True
-        else:
-            # Reset click state when pinch is released
-            if pinch_dist >= 0.055:
-                clicked = False
 
         # 3. Scroll action
-        if gesture_text == "SCROLL":
-            cv2.circle(frame, (x, y), 10, (0, 0, 255), -1)
+        if gesture_text == "SCROLL UP":
+            pyautogui.scroll(20)  # Scroll up
+        elif gesture_text == "SCROLL DOWN":
+            pyautogui.scroll(-20) # Scroll down
 
-            if prev_scroll_y is None:
-                prev_scroll_y = index_tip.y
-            else:
-                dy = index_tip.y - prev_scroll_y
-                # If dy is negative, finger moved up -> scroll up (positive value)
-                # If dy is positive, finger moved down -> scroll down (negative value)
-                scroll_amount = -int(dy * 1200)
-                if abs(scroll_amount) >= 1:
-                    pyautogui.scroll(scroll_amount)
-                    prev_scroll_y = index_tip.y
-        else:
-            prev_scroll_y = None
-
-        # 4. Hide/Show webpage (Toggle Desktop via Win + D)
-        if gesture_text == "SHOW/HIDE DESKTOP":
-            if not desktop_toggled:
+        # 4. Close (Minimize all via Win + D) and Reopen (Restore all via Win + D)
+        if gesture_text == "CLOSE":
+            if not is_minimized:
                 pyautogui.hotkey('win', 'd')
-                desktop_toggled = True
-        else:
-            desktop_toggled = False
+                is_minimized = True
+        elif gesture_text == "REOPEN":
+            if is_minimized:
+                pyautogui.hotkey('win', 'd')
+                is_minimized = False
 
-        # 5. Go Back (Alt + Left Arrow)
-        if gesture_text == "GO BACK":
-            if not back_triggered:
-                pyautogui.hotkey('alt', 'left')
-                back_triggered = True
-        else:
-            back_triggered = False
+
 
         # Display detected gesture on screen
         cv2.putText(
@@ -180,11 +148,7 @@ while True:
         )
     else:
         # Reset tracking states if hand is completely out of frame
-        prev_x, prev_y = None, None
-        prev_scroll_y = None
-        clicked = False
-        desktop_toggled = False
-        back_triggered = False
+        pass
 
     cv2.imshow("Hand Tracking", frame)
 
